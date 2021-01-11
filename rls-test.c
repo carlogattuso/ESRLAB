@@ -9,8 +9,8 @@ int genRSsignalargerThan3RB(int u, int v, int m, int M_RS_SC, _Complex float *DM
 int largestprime_lower_than(int number);
 int check_if_prime(int number);
 void printZFCOEFF(_Complex float *correct, int nofcoeff);
-void printCOEFF(float *correct, int nofcoeff);
-int allocTest (int numbits, float *test);
+void printCOEFF(int *correct, int nofcoeff);
+int allocTest (int numbits, int *test);
 void gridAllocation(_Complex float *grid, _Complex float *symbols, int rows, int columns, int symbLength);
 
 #define QAM4_LEVEL      0.7071    ///< QAM4 amplitude (RMS=1)
@@ -25,7 +25,7 @@ void gridAllocation(_Complex float *grid, _Complex float *symbols, int rows, int
 _Complex float symbols[BUFFER_SZ];
 _Complex float grid[CARRIERS][SYMBOLS*NUM_SUBFRAMES];
 
-float test[BUFFER_SZ];
+int test[BUFFER_SZ];
 
 //DMRS Params
 int M_RS_SC = 156;
@@ -37,23 +37,22 @@ int main() {
     //We modulate one subframe of samples
     //mod_BPSK(MOD_DMRS_LENGTH, symbols);
 	allocTest(MOD_DMRS_LENGTH, test);
-    printZFCOEFF(test, CARRIERS*SYMBOLS);
+    printCOEFF(test, CARRIERS*SYMBOLS);
 
     DMRS_length = genRSsignalargerThan3RB(0, 1, 10, M_RS_SC, DMRS_SEQ0, 0);
     printf("DMRS 0 Length: %d\n", DMRS_length);
     DMRS_length = genRSsignalargerThan3RB(1, 1, 10, M_RS_SC, DMRS_SEQ1, 0);
     printf("DMRS 1 Length: %d\n", DMRS_length);
-
-
+	
     return 0;
 }
 
-int allocTest (int numbits, float *test){
+int allocTest (int numbits, int *test){
 	int i,j;
 
 	for(i=0; i<(SYMBOLS*NUM_SUBFRAMES); i++){
 		for(j=0; j<CARRIERS; j++){
-			*(test+CARRIERS*i+j)= (float) i;
+			*(test+CARRIERS*i+j)= i;
 		}
 	}
 	return(i);
@@ -131,10 +130,10 @@ void printZFCOEFF(_Complex float *correct, int nofcoeff){
 	}
 }
 
-void printCOEFF(float *correct, int nofcoeff){
+void printCOEFF(int *correct, int nofcoeff){
 	int i;
 	for(i=0; i<nofcoeff; i++){
-		printf("%f\n", *(correct+i));
+		printf("%d\n", *(correct+i));
 	}
 }
 
