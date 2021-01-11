@@ -3,13 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #define QAM4_LEVEL      0.7071    ///< QAM4 amplitude (RMS=1)
 #define BUFFER_SZ	2048
 #define MOD_NO_DMRS_LENGTH 432
 #define MOD_DMRS_LENGTH 504
 
-#define CARRIERS 156
+#define CARRIERS 12
 #define SYMBOLS 14
 #define NUM_SUBFRAMES 1
 
@@ -39,13 +40,18 @@ _Complex float DMRS_SEQ0[BUFFER_SZ];
 _Complex float DMRS_SEQ1[BUFFER_SZ];
 
 int main() {
-	allocTest(CARRIERS*SYMBOLS*NUM_SUBFRAMES, test);
+	clock_t t_ini, t_fin;
+  	double secs;
+
+  	t_ini = clock();
+
+	/*allocTest(CARRIERS*SYMBOLS*NUM_SUBFRAMES, test);
 	printf("Vector: \n");
     printCOEFF(test, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
 	
 	gridAllocationTest(testMatrix, test);
 	printf("Matrix: \n");
-	printMatrixTest(testMatrix);
+	printMatrixTest(testMatrix);*/
 
 	//We modulate one subframe of samples
     mod_BPSK(CARRIERS*SYMBOLS*NUM_SUBFRAMES, symbols);
@@ -55,12 +61,17 @@ int main() {
 	//We allocate grid received into a matrix to equalize each subcarrier
 	gridAllocation(grid, symbols);
 	printMatrix(grid);
-
+	
     DMRS_length = genRSsignalargerThan3RB(0, 1, 10, M_RS_SC, DMRS_SEQ0, 0);
     printf("DMRS 0 Length: %d\n", DMRS_length);
     DMRS_length = genRSsignalargerThan3RB(1, 1, 10, M_RS_SC, DMRS_SEQ1, 0);
     printf("DMRS 1 Length: %d\n", DMRS_length);
 
+	/* ...hacer algo... */
+  	t_fin = clock();
+
+  	secs = (double)(t_fin - t_ini) / CLOCKS_PER_SEC;
+  	printf("%.16g milisegundos\n", secs * 1000.0);
     return 0;
 }
 
