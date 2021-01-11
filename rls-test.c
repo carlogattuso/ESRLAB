@@ -13,7 +13,7 @@
 #define CARRIERS 156
 #define SYMBOLS 14
 #define NUM_SUBFRAMES 1
-#define WINDOW_SIZE 12
+#define WINDOW_SIZE 7
 
 int mod_BPSK (int numbits, _Complex float *symbols);
 int genRSsignalargerThan3RB(int u, int v, int m, int M_RS_SC, _Complex float *DMRSseq, int TxRxMode);
@@ -31,6 +31,9 @@ void shiftWindow(int *U);
 void printMatrixWindow(int matrix[CARRIERS][WINDOW_SIZE]);
 void putSamples(int U[CARRIERS][WINDOW_SIZE], int matrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES], int column);
 void averageVector(_Complex float *large, _Complex float *average);
+void printMatrixWindowComplex(_Complex float matrix[CARRIERS][WINDOW_SIZE]);
+void shiftWindowMatrixComplex(_Complex float U[CARRIERS][WINDOW_SIZE]);
+void putSamplesComplex(_Complex float U[CARRIERS][WINDOW_SIZE], _Complex float matrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES], int column);
 
 //Modulation symbols and grid
 _Complex float symbols[CARRIERS*SYMBOLS*NUM_SUBFRAMES];
@@ -41,7 +44,7 @@ _Complex float average[SYMBOLS];
 int test[CARRIERS*SYMBOLS*NUM_SUBFRAMES];
 int testMatrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES];
 
-int U[CARRIERS][WINDOW_SIZE];
+_Complex float U[CARRIERS][WINDOW_SIZE];
 
 //DMRS Params
 int M_RS_SC = 156;
@@ -50,12 +53,13 @@ _Complex float DMRS_SEQ0[BUFFER_SZ];
 _Complex float DMRS_SEQ1[BUFFER_SZ];
 
 //Vectores de prueba
-int W[CARRIERS][WINDOW_SIZE];
+_Complex float W[CARRIERS][WINDOW_SIZE];
 
-int Vector_Y[CARRIERS];
-int error=0;
-int deseada=5;
-int eta=2;
+_Complex float Y;
+
+_Complex float error=0.0;
+_Complex float deseada=5.0;
+float eta=0.005;
 
 int main() {
 	clock_t t_ini, t_fin;
@@ -64,9 +68,13 @@ int main() {
   	t_ini = clock();
 
 	//We modulate one subframe of samples
-    /*mod_BPSK(CARRIERS*SYMBOLS*NUM_SUBFRAMES, symbols);
-	printf("Vector: \n");
-	printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);*/
+    mod_BPSK(CARRIERS*SYMBOLS*NUM_SUBFRAMES, symbols);
+	//printf("Vector: \n");
+	//printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
+
+	//We allocate grid received into a matrix to equalize each subcarrier
+	gridAllocation(grid, symbols);
+	//printMatrix(grid);
 
 	allocTest(CARRIERS*SYMBOLS*NUM_SUBFRAMES, test);
 	//printf("Vector: \n");
@@ -91,8 +99,6 @@ int main() {
 		printCOEFF(U, WINDOW_SIZE);
 	}*/
 	
-    int Y=0;
-    int prueba=0;
     //Inicializamos vector de pesos
     for(int i=0; i<WINDOW_SIZE; i++){
 		for(int j=0; j<CARRIERS; j++){
@@ -106,10 +112,10 @@ int main() {
     for (int k = 0; k < 14; k++)
     {
         //Shift window
-		shiftWindowMatrix(U);
+		shiftWindowMatrixComplex(U);
 
 		//Set new value
-		putSamples(U, testMatrix, k);
+		putSamplesComplex(U, grid, k);
 
 		//printf("U: \n");
 		//printMatrixWindow(U);
@@ -117,31 +123,31 @@ int main() {
         //Realizamos la suma de coeficientes
 		for(int i=0; i<CARRIERS; i++){
 			for(int j=0; j<WINDOW_SIZE; j++){
-				Vector_Y[i] += W[i][j]*U[i][j];
+				Y += W[i][j]*U[i][j];
 				//printf("Output %d: %d	", i, Vector_Y[i]);
 			}
+			
+			/*printf("\n");
+			printf("Y: %f+%f*I \n", __real__ error,  __imag__ error);
+			printf("\n");*/
+
 			//Calculamos error
 			if(k==3||k==10){
-				error=deseada-Vector_Y[i];
-				//printf("Error: %d\n", error);
-
+				error=deseada-Y;
+				/*printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
+				printf("\n");*/
+				
 				//Actualizamos los pesos
 				for(int j=0; j<WINDOW_SIZE; j++){
-					//printf("U: \n");
-					//printMatrixWindow(U);
+					//printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
 					W[i][j] = W[i][j] + eta*error*U[i][j];
 				}
 			}
 		}
 		/*printf("\n");
 
-		printf("\n");
-		printf("Vector of outputs: \n");
-
 		printf("Pesos: \n");
-		printMatrixWindow(W);
-
-    	printCOEFF(Vector_Y, CARRIERS);*/
+		printMatrixWindowComplex(W);*/
 
         /*
         //Actualizamos los pesos
@@ -149,23 +155,19 @@ int main() {
 			W[j] = W[j] + eta*error*U[j];
 
 		printf("Pesos: \n");
-        printCOEFF(W,12);
+        printCOEFF(W,12);*/
 
-        Y=0;*/
+        Y=0.0;
 
-		for(int i=0; i<CARRIERS; i++){
+		/*for(int i=0; i<CARRIERS; i++){
 			Vector_Y[i] = 0;
-		}
+		}*/
     }
    
     //printCOEFF(Vector_Y,12);
 
 	/*printf("Window: \n");
 	printMatrixWindow(U);*/
-
-	//We allocate grid received into a matrix to equalize each subcarrier
-	/*gridAllocation(grid, symbols);
-	printMatrix(grid);*/
 
     DMRS_length = genRSsignalargerThan3RB(0, 1, 10, M_RS_SC, DMRS_SEQ0, 0);
     printf("DMRS 0 Length: %d\n", DMRS_length);
@@ -204,6 +206,16 @@ void printMatrixWindow(int matrix[CARRIERS][WINDOW_SIZE]){
     for (i = 0; i < 3; i++){
 		for (j = 0; j < WINDOW_SIZE; j++) 
 			printf("%d	", matrix[i][j]); 
+		printf("\n");
+	}
+}
+
+void printMatrixWindowComplex(_Complex float matrix[CARRIERS][WINDOW_SIZE]){
+	int i, j; 
+    for (i = 0; i < 3; i++){
+		for (j = 0; j < WINDOW_SIZE; j++) 
+			if(__imag__ matrix[i][j] >= 0.0)printf("%f+%f*I,	", __real__ matrix[i][j],  __imag__ matrix[i][j]);
+			else printf("%f%f*I,	", __real__ matrix[i][j],  __imag__ matrix[i][j]);
 		printf("\n");
 	}
 } 
@@ -327,6 +339,17 @@ void shiftWindowMatrix(int U[CARRIERS][WINDOW_SIZE]){
 	}
 }
 
+void shiftWindowMatrixComplex(_Complex float U[CARRIERS][WINDOW_SIZE]){
+	int i,j;
+	
+	//Shift of vector
+	for(i=WINDOW_SIZE-1; i > 0; i--){
+		for(j=0; j<CARRIERS; j++){
+			U[j][i] = U[j][i-1];
+		}
+	}
+}
+
 void shiftWindow(int *U){
 	int i,j;
 	//Shift of vector
@@ -336,6 +359,15 @@ void shiftWindow(int *U){
 }
 
 void putSamples(int U[CARRIERS][WINDOW_SIZE], int matrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES], int column){
+	int i,j;
+	for(i=0; i<(SYMBOLS*NUM_SUBFRAMES); i++){
+		for(j=0; j<CARRIERS; j++){
+			U[j][0] = matrix[j][column];
+		}
+	}
+}
+
+void putSamplesComplex(_Complex float U[CARRIERS][WINDOW_SIZE], _Complex float matrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES], int column){
 	int i,j;
 	for(i=0; i<(SYMBOLS*NUM_SUBFRAMES); i++){
 		for(j=0; j<CARRIERS; j++){
