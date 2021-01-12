@@ -82,6 +82,7 @@ int main() {
 
         //Realizamos la suma de coeficientes
 		for(int i=0; i<CARRIERS; i++){
+			Y=0.0;
 			for(int j=0; j<WINDOW_SIZE; j++){
 				Y += W[i][j]*U[i][j];
 			}
