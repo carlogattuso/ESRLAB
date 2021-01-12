@@ -6,16 +6,18 @@
 #include <time.h>
 
 #define QAM4_LEVEL      0.7071    ///< QAM4 amplitude (RMS=1)
+#define DMRS_LEVEL		3.5355
 #define BUFFER_SZ	2048
 #define MOD_NO_DMRS_LENGTH 432
 #define MOD_DMRS_LENGTH 504
 
-#define CARRIERS 3
-#define SYMBOLS 3
+#define CARRIERS 12
+#define SYMBOLS 14
 #define NUM_SUBFRAMES 1
 #define WINDOW_SIZE 3
 
 int mod_BPSK (int numbits, _Complex float *symbols);
+int normDMRS(_Complex float *inout, int length);
 int genRSsignalargerThan3RB(int u, int v, int m, int M_RS_SC, _Complex float *DMRSseq, int TxRxMode);
 int largestprime_lower_than(int number);
 int check_if_prime(int number);
@@ -69,8 +71,10 @@ int main() {
 
 	//We modulate one subframe of samples
     mod_BPSK(CARRIERS*SYMBOLS*NUM_SUBFRAMES, symbols);
-	//printf("Vector: \n");
-	//printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
+	printf("Vector: \n");
+	printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
+
+	normDMRS(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
 
 	//We allocate grid received into a matrix to equalize each subcarrier
 	gridAllocation(grid, symbols);
@@ -117,8 +121,8 @@ int main() {
 		//Set new value
 		putSamplesComplex(U, grid, k);
 
-		printf("U: \n");
-		printMatrixWindowComplex(U);
+		/**printf("U: \n");**/
+		/**printMatrixWindowComplex(U);**/
 
         //Realizamos la suma de coeficientes
 		for(int i=0; i<CARRIERS; i++){
@@ -127,27 +131,27 @@ int main() {
 				Y += W[i][j]*U[i][j];
 			}
 			
-			printf("\n");
+			/*printf("\n");
 			printf("Y: %f+%f*I \n", __real__ Y,  __imag__ Y);
-			printf("\n");
+			printf("\n");*/
 
 			//Calculamos error
 			if(k==3||k==10){
 				error=deseada-Y;
-				printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
-				printf("\n");
+				/*printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
+				printf("\n");*/
 				
 				//Actualizamos los pesos
 				for(int j=0; j<WINDOW_SIZE; j++){
-					printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
+					//printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
 					W[i][j] = W[i][j] + eta*error*U[i][j];
 				}
 			}
 		}
-		printf("\n");
+		/*printf("\n");
 
 		printf("Pesos: \n");
-		printMatrixWindowComplex(W);
+		printMatrixWindowComplex(W);*/
 
         /*
         //Actualizamos los pesos
@@ -292,6 +296,32 @@ int check_if_prime(int number){
 	// flag 0 if not
 	return flag;
 	
+}
+
+int normDMRS(_Complex float *inout, int length){
+	int i, cont=0;
+	float auxR, auxI, averg=0.0, Q=-0.0; 
+	static float ratio=0.0;
+
+	for(i=3*CARRIERS; i<4*CARRIERS; i++){
+		auxR=fabs(__real__ inout[i]);
+		auxI=fabs(__imag__ inout[i]);
+		averg = averg + auxR + auxI;
+		cont++;
+	}
+	
+	printf("CONT: %d\n", cont);
+	
+	averg=averg/((float)2*CARRIERS+0.00000001);
+	printf("AVERAGE: %f\n", averg);
+
+	ratio = 5.0/(averg+Q);
+	printf("RATIO: %f\n", ratio);		
+	for(i=0; i<length; i++){
+		inout[i] = inout[i]*ratio;
+	}
+
+	return(1);
 }
 
 void printZFCOEFF(_Complex float *correct, int nofcoeff){

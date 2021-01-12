@@ -11,7 +11,7 @@
 #define MOD_NO_DMRS_LENGTH 432
 #define MOD_DMRS_LENGTH 504
 
-#define CARRIERS 10
+#define CARRIERS 3
 #define SYMBOLS 14
 #define NUM_SUBFRAMES 1
 #define WINDOW_SIZE 7
@@ -40,7 +40,7 @@ _Complex float W[CARRIERS][WINDOW_SIZE];
 _Complex float Y = 0.0;
 _Complex float error = 0.0;
 _Complex float deseada = 5.0;
-float eta = 0.005;
+float eta = 0.1;
 
 //DMRS Params
 int M_RS_SC = 156;
@@ -98,10 +98,6 @@ int main() {
 			for(int j=0; j<WINDOW_SIZE; j++){
 				Y += W[i][j]*U[i][j];
 			}
-			
-			//printf("\n");
-			//printf("Y: %f+%f*I \n", __real__ Y,  __imag__ Y);
-			//printf("\n");
 
 			//Añadimos la muestra al vector
 			equalized[k*CARRIERS+i] = Y;
@@ -119,9 +115,10 @@ int main() {
 				}
 			}
 		}
+
 		//printf("\n");
-		//printf("Pesos: \n");
-		//printMatrixWindowComplex(W);
+		printf("Pesos: \n");
+		printMatrixWindowComplex(W);
 
         Y=0.0;
     }
