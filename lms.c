@@ -10,10 +10,10 @@
 #define MOD_NO_DMRS_LENGTH 432
 #define MOD_DMRS_LENGTH 504
 
-#define CARRIERS 156
-#define SYMBOLS 14
+#define CARRIERS 3
+#define SYMBOLS 3
 #define NUM_SUBFRAMES 1
-#define WINDOW_SIZE 7
+#define WINDOW_SIZE 3
 
 int mod_BPSK (int numbits, _Complex float *symbols);
 int genRSsignalargerThan3RB(int u, int v, int m, int M_RS_SC, _Complex float *DMRSseq, int TxRxMode);
@@ -87,15 +87,15 @@ int main() {
 				Y += W[i][j]*U[i][j];
 			}
 			
-			/*printf("\n");
+			printf("\n");
 			printf("Y: %f+%f*I \n", __real__ Y,  __imag__ Y);
-			printf("\n");*/
+			printf("\n");
 
 			//Calculamos error
 			if(k==3||k==10){
 				error=deseada-Y;
-				/*printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
-				printf("\n");*/
+				printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
+				printf("\n");
 				
 				//Actualizamos los pesos
 				for(int j=0; j<WINDOW_SIZE; j++){
@@ -104,9 +104,9 @@ int main() {
 				}
 			}
 		}
-		/*printf("\n");
+		printf("\n");
 		printf("Pesos: \n");
-		printMatrixWindowComplex(W);*/
+		printMatrixWindowComplex(W);
 
         Y=0.0;
     }
