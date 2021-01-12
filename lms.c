@@ -11,7 +11,7 @@
 #define MOD_DMRS_LENGTH 504
 
 #define CARRIERS 3
-#define SYMBOLS 3
+#define SYMBOLS 14
 #define NUM_SUBFRAMES 1
 #define WINDOW_SIZE 3
 
@@ -53,11 +53,11 @@ int main() {
 	//We modulate one subframe of samples
     mod_BPSK(CARRIERS*SYMBOLS*NUM_SUBFRAMES, symbols);
 	//printf("Vector: \n");
-	//printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
+	printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
 
 	//We allocate grid received into a matrix to equalize each subcarrier
 	gridAllocation(grid, symbols);
-	//printMatrix(grid);
+	printMatrix(grid);
 	
     //Inicializamos vector de pesos
     for(int i=0; i<WINDOW_SIZE; i++){
@@ -69,7 +69,7 @@ int main() {
 	//printf("W: \n");
 	//printMatrixWindow(W);
 
-    for (int k = 0; k < 14; k++)
+    for (int k = 0; k < SYMBOLS; k++)
     {
         //Shift window
 		shiftWindowMatrixComplex(U);
@@ -77,8 +77,8 @@ int main() {
 		//Set new value
 		putSamplesComplex(U, grid, k);
 
-		//printf("U: \n");
-		//printMatrixWindow(U);
+		printf("U: \n");
+		printMatrixWindowComplex(U);
 
         //Realizamos la suma de coeficientes
 		for(int i=0; i<CARRIERS; i++){
