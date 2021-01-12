@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
 #include <time.h>
 
 #define QAM4_LEVEL      0.7071    ///< QAM4 amplitude (RMS=1)
@@ -10,10 +11,10 @@
 #define MOD_NO_DMRS_LENGTH 432
 #define MOD_DMRS_LENGTH 504
 
-#define CARRIERS 3
+#define CARRIERS 156
 #define SYMBOLS 14
 #define NUM_SUBFRAMES 1
-#define WINDOW_SIZE 3
+#define WINDOW_SIZE 7
 
 int mod_BPSK (int numbits, _Complex float *symbols);
 int genRSsignalargerThan3RB(int u, int v, int m, int M_RS_SC, _Complex float *DMRSseq, int TxRxMode);
@@ -28,6 +29,7 @@ void putSamplesComplex(_Complex float U[CARRIERS][WINDOW_SIZE], _Complex float m
 
 //Modulation symbols and grid
 _Complex float symbols[CARRIERS*SYMBOLS*NUM_SUBFRAMES];
+_Complex float equalized[CARRIERS*SYMBOLS*NUM_SUBFRAMES];
 _Complex float grid[CARRIERS][SYMBOLS*NUM_SUBFRAMES];
 
 //Equalizer params
@@ -43,6 +45,10 @@ int M_RS_SC = 156;
 int DMRS_length;
 _Complex float DMRS_SEQ0[BUFFER_SZ];
 _Complex float DMRS_SEQ1[BUFFER_SZ];
+_Complex float DMRS_TX_TIME0[BUFFER_SZ];
+_Complex float DMRS_RX_TIME0[BUFFER_SZ];
+_Complex float DMRS_TX_TIME1[BUFFER_SZ];
+_Complex float DMRS_RX_TIME1[BUFFER_SZ];
 
 int main() {
 	clock_t t_ini, t_fin;
@@ -53,21 +59,21 @@ int main() {
 	//We modulate one subframe of samples
     mod_BPSK(CARRIERS*SYMBOLS*NUM_SUBFRAMES, symbols);
 	//printf("Vector: \n");
-	printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
+	//printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
 
 	//We allocate grid received into a matrix to equalize each subcarrier
 	gridAllocation(grid, symbols);
-	printMatrix(grid);
+	//printMatrix(grid);
 	
     //Inicializamos vector de pesos
-    for(int i=0; i<WINDOW_SIZE; i++){
-		for(int j=0; j<CARRIERS; j++){
+    for(int i=0; i<CARRIERS; i++){
+		for(int j=0; j<WINDOW_SIZE; j++){
 			W[i][j]=1+j;
 		}
 	}
 
-	//printf("W: \n");
-	//printMatrixWindow(W);
+	printf("W: \n");
+	printMatrixWindowComplex(W);
 
     for (int k = 0; k < SYMBOLS; k++)
     {
@@ -77,8 +83,8 @@ int main() {
 		//Set new value
 		putSamplesComplex(U, grid, k);
 
-		printf("U: \n");
-		printMatrixWindowComplex(U);
+		//printf("U: \n");
+		//printMatrixWindowComplex(U);
 
         //Realizamos la suma de coeficientes
 		for(int i=0; i<CARRIERS; i++){
@@ -87,15 +93,18 @@ int main() {
 				Y += W[i][j]*U[i][j];
 			}
 			
-			printf("\n");
-			printf("Y: %f+%f*I \n", __real__ Y,  __imag__ Y);
-			printf("\n");
+			//printf("\n");
+			//printf("Y: %f+%f*I \n", __real__ Y,  __imag__ Y);
+			//printf("\n");
+
+			//Añadimos la muestra al vector
+			equalized[k*CARRIERS+i] = Y;
 
 			//Calculamos error
 			if(k==3||k==10){
 				error=deseada-Y;
-				printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
-				printf("\n");
+				//printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
+				//printf("\n");
 				
 				//Actualizamos los pesos
 				for(int j=0; j<WINDOW_SIZE; j++){
@@ -104,15 +113,19 @@ int main() {
 				}
 			}
 		}
-		printf("\n");
-		printf("Pesos: \n");
-		printMatrixWindowComplex(W);
+		//printf("\n");
+		//printf("Pesos: \n");
+		//printMatrixWindowComplex(W);
 
         Y=0.0;
     }
    
+	//printf("Vector: \n");
+	//printZFCOEFF(equalized, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
+
     DMRS_length = genRSsignalargerThan3RB(0, 1, 10, M_RS_SC, DMRS_SEQ0, 0);
     printf("DMRS 0 Length: %d\n", DMRS_length);
+	//printZFCOEFF(DMRS_SEQ0, 156);
     DMRS_length = genRSsignalargerThan3RB(1, 1, 10, M_RS_SC, DMRS_SEQ1, 0);
     printf("DMRS 1 Length: %d\n", DMRS_length);
 
@@ -125,7 +138,7 @@ int main() {
 
 void printMatrixWindowComplex(_Complex float matrix[CARRIERS][WINDOW_SIZE]){
 	int i, j; 
-    for (i = 0; i < 3; i++){
+    for (i = 0; i < 50; i++){
 		for (j = 0; j < WINDOW_SIZE; j++) 
 			if(__imag__ matrix[i][j] >= 0.0)printf("%f+%f*I,	", __real__ matrix[i][j],  __imag__ matrix[i][j]);
 			else printf("%f%f*I,	", __real__ matrix[i][j],  __imag__ matrix[i][j]);
