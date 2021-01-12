@@ -11,7 +11,7 @@
 #define MOD_NO_DMRS_LENGTH 432
 #define MOD_DMRS_LENGTH 504
 
-#define CARRIERS 156
+#define CARRIERS 10
 #define SYMBOLS 14
 #define NUM_SUBFRAMES 1
 #define WINDOW_SIZE 7
@@ -26,6 +26,7 @@ void printMatrix(_Complex float matrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES]);
 void printMatrixWindowComplex(_Complex float matrix[CARRIERS][WINDOW_SIZE]);
 void shiftWindowMatrixComplex(_Complex float U[CARRIERS][WINDOW_SIZE]);
 void putSamplesComplex(_Complex float U[CARRIERS][WINDOW_SIZE], _Complex float matrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES], int column);
+int initWeights(_Complex float *Weights);
 
 //Modulation symbols and grid
 _Complex float symbols[CARRIERS*SYMBOLS*NUM_SUBFRAMES];
@@ -34,6 +35,7 @@ _Complex float grid[CARRIERS][SYMBOLS*NUM_SUBFRAMES];
 
 //Equalizer params
 _Complex float U[CARRIERS][WINDOW_SIZE];
+_Complex float weights[WINDOW_SIZE];
 _Complex float W[CARRIERS][WINDOW_SIZE];
 _Complex float Y = 0.0;
 _Complex float error = 0.0;
@@ -61,6 +63,10 @@ int main() {
 	//printf("Vector: \n");
 	//printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
 
+	initWeights(weights);
+	printf("Init weights: \n");
+	printZFCOEFF(weights, WINDOW_SIZE);
+
 	//We allocate grid received into a matrix to equalize each subcarrier
 	gridAllocation(grid, symbols);
 	//printMatrix(grid);
@@ -68,7 +74,7 @@ int main() {
     //Inicializamos vector de pesos
     for(int i=0; i<CARRIERS; i++){
 		for(int j=0; j<WINDOW_SIZE; j++){
-			W[i][j]=1+j;
+			W[i][j]=weights[j];
 		}
 	}
 
@@ -138,7 +144,7 @@ int main() {
 
 void printMatrixWindowComplex(_Complex float matrix[CARRIERS][WINDOW_SIZE]){
 	int i, j; 
-    for (i = 0; i < 50; i++){
+    for (i = 0; i < CARRIERS; i++){
 		for (j = 0; j < WINDOW_SIZE; j++) 
 			if(__imag__ matrix[i][j] >= 0.0)printf("%f+%f*I,	", __real__ matrix[i][j],  __imag__ matrix[i][j]);
 			else printf("%f%f*I,	", __real__ matrix[i][j],  __imag__ matrix[i][j]);
@@ -255,4 +261,17 @@ void putSamplesComplex(_Complex float U[CARRIERS][WINDOW_SIZE], _Complex float m
 			U[j][0] = matrix[j][column];
 		}
 	}
+}
+
+int initWeights(_Complex float *Weights){
+	//We choose normally distributed init weights to begin equalizing
+	*(Weights)=0.6604 + 0.0000*I;
+	*(Weights+1)=-0.4210 + 0.0000*I;
+  	*(Weights+2)=-0.7330 + 0.0000*I;
+  	*(Weights+3)=0.3788 - 0.0000*I;
+  	*(Weights+4)=0.2327 - 0.0000*I;
+  	*(Weights+5)=-1.7549 - 0.0000*I;
+  	*(Weights+6)=-1.4092 - 0.0000*I;
+  	
+	return(7);
 }
