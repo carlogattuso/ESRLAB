@@ -11,8 +11,8 @@
 #define MOD_NO_DMRS_LENGTH 432
 #define MOD_DMRS_LENGTH 504
 
-#define CARRIERS 12
-#define SYMBOLS 14
+#define CARRIERS 156
+#define SYMBOLS 1
 #define NUM_SUBFRAMES 1
 #define WINDOW_SIZE 3
 
@@ -32,7 +32,7 @@ void shiftWindowMatrix(int U[CARRIERS][WINDOW_SIZE]);
 void shiftWindow(int *U);
 void printMatrixWindow(int matrix[CARRIERS][WINDOW_SIZE]);
 void putSamples(int U[CARRIERS][WINDOW_SIZE], int matrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES], int column);
-void averageVector(_Complex float *large, _Complex float *average);
+void averageVector(_Complex float *inout, int length);
 void printMatrixWindowComplex(_Complex float matrix[CARRIERS][WINDOW_SIZE]);
 void shiftWindowMatrixComplex(_Complex float U[CARRIERS][WINDOW_SIZE]);
 void putSamplesComplex(_Complex float U[CARRIERS][WINDOW_SIZE], _Complex float matrix[CARRIERS][SYMBOLS*NUM_SUBFRAMES], int column);
@@ -74,7 +74,8 @@ int main() {
 	printf("Vector: \n");
 	printZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
 
-	normDMRS(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
+	//normDMRS(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
+	averageVector(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
 
 	//We allocate grid received into a matrix to equalize each subcarrier
 	gridAllocation(grid, symbols);
@@ -406,15 +407,19 @@ void putSamplesComplex(_Complex float U[CARRIERS][WINDOW_SIZE], _Complex float m
 	}
 }
 
-void averageVector(_Complex float *large, _Complex float *average){
-	int aux, avg;
-	for(int i=0; i<SYMBOLS; i++){
-		aux = 0;
-		avg = 0;
-		for(int j=0; j<CARRIERS; j++){
-			aux += large[CARRIERS*i+j];
-		}
-		avg = aux/CARRIERS;
-		average[i]=avg;
+void averageVector(_Complex float *inout, int length){
+	int i, cont=0;
+	float auxR, auxI, averg=0.0; 
+
+	for(i=0; i<length; i++){
+		auxR=fabs(__real__ inout[i]);
+		auxI=fabs(__imag__ inout[i]);
+		averg = averg + auxR + auxI;
+		cont++;
 	}
+	
+	printf("CONT: %d\n", cont);
+	
+	averg=averg/((float)2*CARRIERS+0.00000001);
+	printf("AVERAGE: %f\n", averg);
 }
