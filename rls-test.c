@@ -137,7 +137,7 @@ int main() {
 			printf("\n");*/
 
 			//Calculamos error
-			if(k==3||k==10){
+			//if(k==3||k==10){
 				error=deseada-Y;
 				/*printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
 				printf("\n");*/
@@ -147,8 +147,9 @@ int main() {
 					//printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
 					W[i][j] = W[i][j] + eta*error*U[i][j];
 				}
-			}
+			//}
 		}
+		
 		/*printf("\n");
 
 		printf("Pesos: \n");
