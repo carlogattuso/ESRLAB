@@ -30,7 +30,7 @@ _Complex float W[BUFFER_SZ];
 _Complex float Y = 0.0;
 _Complex float error=0.0;
 _Complex float desired=1.0;
-float eta=0.005;
+float eta=0.05;
 
 int main() {
 	clock_t t_ini, t_fin;
@@ -64,7 +64,7 @@ int main() {
 		    shiftWindow(U);
 
             //Set new value to window
-			U[0] = symbols_noise[CARRIERS*k+i];
+			U[0] = symbols[CARRIERS*k+i];
 		    //U[0] = symbols_noise[CARRIERS*k+i];
 
             //We compute the output of the filter
@@ -73,7 +73,7 @@ int main() {
 			}
 
             //Checking if it is a DMRS sequence
-            if(k==3||k==10) {
+            //if(k==3||k==10) {
                 //Calculate the error if it is a DMRS sample
 				desired = symbols[CARRIERS*k+i];
                 error = desired - Y;
@@ -84,7 +84,7 @@ int main() {
 				
                 //We update weights accordingly
 				for(int j=0; j<WINDOW_SIZE; j++) W[j] = W[j] + eta*conj(error)*U[j];
-            }
+            //}
 
             //Append output to equalized vector
             equalized[CARRIERS*k+i] = Y;
@@ -158,7 +158,7 @@ void shiftWindow(_Complex float *U){
 
 int initWeights(_Complex float *Weights){
 	//We choose normally distributed init weights to begin equalizing
-	*(Weights)=1.0000 + 0.0000*I;
+	*(Weights)=0.0000 + 0.0000*I;
 	*(Weights+1)=0.0000 + 0.0000*I;
   	*(Weights+2)=0.0000 + 0.0000*I;
   	*(Weights+3)=0.0000 + 0.0000*I;

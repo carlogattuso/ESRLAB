@@ -7,13 +7,13 @@
 #include <time.h>
 
 #define QAM4_LEVEL      0.7071    ///< QAM4 amplitude (RMS=1)
-#define BUFFER_SZ	2048
+#define BUFFER_SZ	3000000
 #define MOD_NO_DMRS_LENGTH 432
 #define MOD_DMRS_LENGTH 504
 
-#define CARRIERS 3
+#define CARRIERS 156
 #define SYMBOLS 14
-#define NUM_SUBFRAMES 1
+#define NUM_SUBFRAMES 100
 #define WINDOW_SIZE 7
 
 int mod_BPSK (int numbits, _Complex float *symbols);
@@ -103,7 +103,8 @@ int main() {
 			equalized[k*CARRIERS+i] = Y;
 
 			//Calculamos error
-			if(k==3||k==10){
+			//if(k==3||k==10){
+				deseada = symbols[CARRIERS*k+i];
 				error=deseada-Y;
 				//printf("Error: %f+%f*I \n", __real__ error,  __imag__ error);
 				//printf("\n");
@@ -111,9 +112,9 @@ int main() {
 				//Actualizamos los pesos
 				for(int j=0; j<WINDOW_SIZE; j++){
 					//printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
-					W[i][j] = W[i][j] + eta*error*U[i][j];
+					W[i][j] = W[i][j] + eta*conj(error)*U[i][j];
 				}
-			}
+			//}
 		}
 
 		//printf("\n");
