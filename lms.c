@@ -38,7 +38,7 @@ _Complex float U[CARRIERS][WINDOW_SIZE];
 _Complex float weights[WINDOW_SIZE];
 _Complex float W[CARRIERS][WINDOW_SIZE];
 _Complex float Y = 0.0;
-_Complex float error = 0.1452f;
+_Complex float error = 0.1142f;
 _Complex float deseada = 5.0;
 float eta = 0.1;
 
@@ -90,10 +90,11 @@ int main() {
 	}
 
 	//Inicializamos el vector de test
-	test[0]=0.3426f;
-	test[1]=-0.4335f;
-	test[2]=-1.3076f;
-	test[3]=0.3187f;
+	
+	test[0]=0.6968f;
+	test[1]=-1.6534f;
+	test[2]=0.3343f;
+	test[3]=-0.8598f;
 
 	//Inicializamos vector de pesos
     for(int i=0; i<WINDOW_SIZE; i++){
@@ -125,13 +126,13 @@ int main() {
 			
 			Y=0.0;
 			for(int j=0; j<WINDOW_SIZE; j++){
-				Y += W[i][j]*test[j];
+				Y += conj(W[i][j])*test[j];
 			}
 
 			deseada = symbols[CARRIERS*k+i];
 			//error=deseada-Y;
 			
-			if(k==0){
+			if(k==3/*||k==10*/){
 				if(i==0){
 
 					//Actualizamos la matriz de la primera portadora
@@ -146,176 +147,42 @@ int main() {
 					//Actualizamos el vector de ganancias
 
 					//Computamos el valor del producto
-					_Complex float aux2= 0.0f;
+					_Complex float aux= 0.0f;
 					for(int n=0; n<WINDOW_SIZE; n++){
-						aux2 += test[n]*pi[i][n];
+						aux += conj(test[n])*pi[i][n];
 					}
 					for(int m=0; m<WINDOW_SIZE; m++){
-						eta_vec[i][m] = pi[i][m]/(lambda+aux2);
+						eta_vec[i][m] = pi[i][m]/(lambda+aux);
 					}
 
 					//Actualizamos la matriz de correlación
-
-					//Computamos la matriz auxiliar
-					_Complex float aux[WINDOW_SIZE][WINDOW_SIZE];
-					for(int m=0; m<WINDOW_SIZE; m++){
-						for(int l=0; l<WINDOW_SIZE; l++){
-							aux[m][l] = eta_vec[i][m]*test[l];
-						}
-					}
-
-					//Obtenemos la matriz de correlación inversa
-					for(int m=0; m<WINDOW_SIZE; m++){
-						for(int l=0; l<WINDOW_SIZE; l++){
-							one[m][l] = one[m][l]-aux[m][l];
-						}
-					}
-
-					//Actualizar los pesos
-					//Actualizamos los pesos
-					for(int j=0; j<WINDOW_SIZE; j++){
-						//printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
-						W[i][j] = W[i][j] + eta_vec[i][j]*conj(error);
-					}
-				}
-
-				if(i==1){
-
-					//Actualizamos la matriz de la primera portadora
+					_Complex float aux2[WINDOW_SIZE];
 					for(int m=0; m<WINDOW_SIZE; m++){
 						conv = 0.0f;
 						for(int l=0; l<WINDOW_SIZE; l++){
-							conv += two[l][m]*test[l];
+							conv += test[l]*one[m][l];
 						}
-						pi[i][m] = conv;
+						aux2[m] = conv;
 					}
 
-					//Actualizamos el vector de ganancias
-
-					//Computamos el valor del producto
-					_Complex float aux2= 0.0f;
-					for(int n=0; n<WINDOW_SIZE; n++){
-							aux2 += test[n]*pi[i][n];
-					}
-					for(int m=0; m<WINDOW_SIZE; m++){
-						eta_vec[i][m] = pi[i][m]/(lambda+aux2);
-					}
-
-					//Actualizamos la matriz de correlación
-
+					_Complex float aux3[WINDOW_SIZE][WINDOW_SIZE];
 					//Computamos la matriz auxiliar
-					_Complex float aux[WINDOW_SIZE][WINDOW_SIZE];
 					for(int m=0; m<WINDOW_SIZE; m++){
 						for(int l=0; l<WINDOW_SIZE; l++){
-							aux[m][l] = eta_vec[i][m]*test[l];
+							aux3[m][l] = eta_vec[i][m]*aux2[l];
 						}
 					}
 
+					//Multiplicamos 
 					//Obtenemos la matriz de correlación inversa
 					for(int m=0; m<WINDOW_SIZE; m++){
 						for(int l=0; l<WINDOW_SIZE; l++){
-							two[m][l] = two[m][l]-aux[m][l];
+							one[m][l] = one[m][l]-aux3[m][l];
 						}
 					}
 
-					//Actualizar los pesos
 					//Actualizamos los pesos
 					for(int j=0; j<WINDOW_SIZE; j++){
-						//printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
-						W[i][j] = W[i][j] + eta_vec[i][j]*conj(error);
-					}
-				}
-
-				if(i==2){
-
-					//Actualizamos la matriz de la primera portadora
-					for(int m=0; m<WINDOW_SIZE; m++){
-						conv = 0.0f;
-						for(int l=0; l<WINDOW_SIZE; l++){
-							conv += three[l][m]*test[l];
-						}
-						pi[i][m] = conv;
-					}
-
-					//Actualizamos el vector de ganancias
-
-					//Computamos el valor del producto
-					_Complex float aux2= 0.0f;
-					for(int n=0; n<WINDOW_SIZE; n++){
-							aux2 += test[n]*pi[i][n];
-					}
-					for(int m=0; m<WINDOW_SIZE; m++){
-						eta_vec[i][m] = pi[i][m]/(lambda+aux2);
-					}
-
-					//Actualizamos la matriz de correlación
-
-					//Computamos la matriz auxiliar
-					_Complex float aux[WINDOW_SIZE][WINDOW_SIZE];
-					for(int m=0; m<WINDOW_SIZE; m++){
-						for(int l=0; l<WINDOW_SIZE; l++){
-							aux[m][l] = eta_vec[i][m]*test[l];
-						}
-					}
-
-					//Obtenemos la matriz de correlación inversa
-					for(int m=0; m<WINDOW_SIZE; m++){
-						for(int l=0; l<WINDOW_SIZE; l++){
-							three[m][l] = three[m][l]-aux[m][l];
-						}
-					}
-
-					//Actualizar los pesos
-					//Actualizamos los pesos
-					for(int j=0; j<WINDOW_SIZE; j++){
-						//printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
-						W[i][j] = W[i][j] + eta_vec[i][j]*conj(error);
-					}
-				}
-
-				if(i==3){
-
-					//Actualizamos la matriz de la primera portadora
-					for(int m=0; m<WINDOW_SIZE; m++){
-						conv = 0.0f;
-						for(int l=0; l<WINDOW_SIZE; l++){
-							conv += fourth[l][m]*test[l];
-						}
-						pi[i][m] = conv;
-					}
-
-					//Actualizamos el vector de ganancias
-
-					//Computamos el valor del producto
-					_Complex float aux2= 0.0f;
-					for(int n=0; n<WINDOW_SIZE; n++){
-							aux2 += test[n]*pi[i][n];
-					}
-					for(int m=0; m<WINDOW_SIZE; m++){
-						eta_vec[i][m] = pi[i][m]/(lambda+aux2);
-					}
-
-					//Actualizamos la matriz de correlación
-
-					//Computamos la matriz auxiliar
-					_Complex float aux[WINDOW_SIZE][WINDOW_SIZE];
-					for(int m=0; m<WINDOW_SIZE; m++){
-						for(int l=0; l<WINDOW_SIZE; l++){
-							aux[m][l] = eta_vec[i][m]*test[l];
-						}
-					}
-
-					//Obtenemos la matriz de correlación inversa
-					for(int m=0; m<WINDOW_SIZE; m++){
-						for(int l=0; l<WINDOW_SIZE; l++){
-							fourth[m][l] = fourth[m][l]-aux[m][l];
-						}
-					}
-
-					//Actualizar los pesos
-					//Actualizamos los pesos
-					for(int j=0; j<WINDOW_SIZE; j++){
-						//printf("U: %f+%f*I \n", __real__ U[i][j],  __imag__ U[i][j]);
 						W[i][j] = W[i][j] + eta_vec[i][j]*conj(error);
 					}
 				}
@@ -324,10 +191,6 @@ int main() {
 			//Añadimos la muestra al vector
 			equalized[k*CARRIERS+i] = Y;
 		}
-
-		//printf("\n");
-		//printf("Pesos: \n");
-		//printMatrixWindowComplex(W);
 
         Y=0.0;
     }
