@@ -6,11 +6,11 @@
 #include <time.h>
 
 #define QAM4_LEVEL      0.7071    ///< QAM4 amplitude (RMS=1)
-#define BUFFER_SZ	2048
+#define BUFFER_SZ	50000
 
-#define CARRIERS 5
+#define CARRIERS 156
 #define SYMBOLS 14
-#define NUM_SUBFRAMES 1
+#define NUM_SUBFRAMES 20
 #define WINDOW_SIZE 12
 
 int mod_BPSK (int numbits, _Complex float *symbols);
@@ -20,6 +20,7 @@ void printVector(_Complex float *correct, int nofcoeff);
 void shiftWindow(_Complex float *U);
 int initWeights(_Complex float *W);
 int addNoise (int numbits, _Complex float *symbols, _Complex float *symbols_noise);
+void initZFCOEFF(_Complex float *correct, int nofcoeff);
 
 //Modulation symbols and grid
 _Complex float symbols[BUFFER_SZ];
@@ -32,6 +33,8 @@ _Complex float error=0.0;
 _Complex float desired=1.0;
 float eta=0.05;
 
+float w[BUFFER_SZ];
+
 int main() {
 	clock_t t_ini, t_fin;
   	double secs;
@@ -39,8 +42,13 @@ int main() {
 	srand(time(0));
   	t_ini = clock();
 
+	for (int i=0; i<13; i++){
+		w[i] = (i == 10/2) ? 1.0f : 0.0f;
+	}
+
     //We modulate one subframe of samples
     mod_BPSK(CARRIERS*SYMBOLS*NUM_SUBFRAMES, symbols);
+	initZFCOEFF(symbols, CARRIERS*SYMBOLS*NUM_SUBFRAMES);
 	addNoise(CARRIERS*SYMBOLS*NUM_SUBFRAMES, symbols, symbols_noise);
 
 	float test;
@@ -73,7 +81,7 @@ int main() {
 			}
 
             //Checking if it is a DMRS sequence
-            //if(k==3||k==10) {
+            if(k==3||k==10) {
                 //Calculate the error if it is a DMRS sample
 				desired = symbols[CARRIERS*k+i];
                 error = desired - Y;
@@ -84,7 +92,7 @@ int main() {
 				
                 //We update weights accordingly
 				for(int j=0; j<WINDOW_SIZE; j++) W[j] = W[j] + eta*conj(error)*U[j];
-            //}
+            }
 
             //Append output to equalized vector
             equalized[CARRIERS*k+i] = Y;
@@ -167,4 +175,11 @@ int initWeights(_Complex float *Weights){
   	*(Weights+6)=0.0000 + 0.0000*I;
   	
 	return(7);
+}
+
+void initZFCOEFF(_Complex float *correct, int nofcoeff){
+	int i;
+	for(i=0; i<nofcoeff; i++){
+		*(correct+i) = 0.0;
+	}
 }
