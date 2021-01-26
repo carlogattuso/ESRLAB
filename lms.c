@@ -12,7 +12,7 @@
 #define MOD_DMRS_LENGTH 504
 
 #define CARRIERS 156
-#define SYMBOLS 14
+#define SYMBOLS 300
 #define NUM_SUBFRAMES 1
 #define WINDOW_SIZE 4
 
@@ -38,7 +38,7 @@ _Complex float U[CARRIERS][WINDOW_SIZE];
 _Complex float weights[WINDOW_SIZE];
 _Complex float W[CARRIERS][WINDOW_SIZE];
 _Complex float Y = 0.0;
-_Complex float error = 0.1142f;
+_Complex float error = 0.0f;
 _Complex float deseada = 5.0;
 float eta = 0.1;
 
@@ -126,20 +126,20 @@ int main() {
 			
 			Y=0.0;
 			for(int j=0; j<WINDOW_SIZE; j++){
-				Y += conj(W[i][j])*test[j];
+				Y += conj(W[i][j])*U[i][j];
 			}
 
 			deseada = symbols[CARRIERS*k+i];
-			//error=deseada-Y;
+			error=deseada-Y;
 			
-			if(k==3/*||k==10*/){
+			if(k==3||k==10){
 				if(i==0){
 
 					//Actualizamos la matriz de la primera portadora
 					for(int m=0; m<WINDOW_SIZE; m++){
 						conv = 0.0f;
 						for(int l=0; l<WINDOW_SIZE; l++){
-							conv += one[l][m]*test[l];
+							conv += one[l][m]*U[i][l];
 						}
 						pi[i][m] = conv;
 					}
@@ -149,8 +149,9 @@ int main() {
 					//Computamos el valor del producto
 					_Complex float aux= 0.0f;
 					for(int n=0; n<WINDOW_SIZE; n++){
-						aux += conj(test[n])*pi[i][n];
+						aux += conj(U[i][n])*pi[i][n];
 					}
+
 					for(int m=0; m<WINDOW_SIZE; m++){
 						eta_vec[i][m] = pi[i][m]/(lambda+aux);
 					}
@@ -160,7 +161,7 @@ int main() {
 					for(int m=0; m<WINDOW_SIZE; m++){
 						conv = 0.0f;
 						for(int l=0; l<WINDOW_SIZE; l++){
-							conv += test[l]*one[m][l];
+							conv += conj(U[i][l])*one[m][l];
 						}
 						aux2[m] = conv;
 					}
